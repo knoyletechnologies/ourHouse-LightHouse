@@ -3,6 +3,7 @@ import json
 import time
 
 import restAPI
+import socket
 
 configPath = "appConfig.json"  # global define config file path
 appConfig = {}  # global set app config
@@ -41,12 +42,29 @@ class LightHouse:
         dtCheckCode = restAPI.API.setupHouseCheck(self, {"houseCode": entHouseCode})
         if dtCheckCode != {}:
             # ran successfully
-            print("ran successfully")
-            print(dtCheckCode)
+            checkCode = json.loads(dtCheckCode)
+            if(checkCode['valid'] == True):
+                newHouseID = checkCode['houseID']
+
+                dtNodeSetup = restAPI.API.setupLightHouse(self,newHouseID,{"licenceKey": entLightHouseKey, "version": appConfig['lightHouseVersion'], "ipAddress": socket.gethostbyname(socket.gethostname())})
+                if dtCheckCode != {}:
+                    nodeSetup = json.loads(dtNodeSetup)
+                    if(nodeSetup['state'] == "success"):
+                        print("Lighthouse node confirmed")
+                        appConfig['houseID'] = newHouseID
+                        appConfig['lightHouseNode'] = nodeSetup['nodeID']
+                        appConfig['lightHouseKey'] = entLightHouseKey
+                        self.save_config()
+                        print("--Saved--")
+                    else:
+                        print("Node setup failed")
+                        print(nodeSetup)
+                else:
+                    print(dtNodeSetup)
+            else:
+                print("houseCode invalid!")
         else:
             print(dtCheckCode)
-
-        print("Thanks! \nTo confirm:\nLightHouse Key: "+entLightHouseKey+"\nHouse Code: "+entHouseCode)
 
     def __init__(self):
         if self.load_config():
@@ -60,7 +78,7 @@ class LightHouse:
                 print("LightHouse is not set up. need to run set up")
                 prmpt = ""
                 while (prmpt == ""):
-                    print("\nPlease choose one of the following options and enter the prompt:\n1. Run LightHouse setup wizard - 'run'\n2. Exit program 'exit'\n")
+                    print("\nPlease choose one of the following options and enter the prompt:\nRun LightHouse setup wizard - 'run'\nExit program - 'exit'\n")
                     prmpt = input("")
                 if prmpt.upper() == "RUN":
                     self.mnu_setup_lightHouse()

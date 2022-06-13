@@ -12,11 +12,11 @@ class API:
             return response.content
 
     def setupLightHouse(self, house, data):
-        response = requests.post(baseURL + "/v1" + "/house/" + house + "/lightHouse/setup", data)
-        if response.status_code == 200:
+        response = requests.post(baseURL + "/v1" + "/house/" + house + "/lightHouse/setup", json=data)
+        if response.status_code == 201:
             return response.content
         else:
-            return {}
+            return response.content
 
     def house(self, house, key):
         headers = {'light-house-key': key, 'light-house-house': house}
