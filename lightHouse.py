@@ -2,8 +2,11 @@ import os
 import json
 import time
 
+import presence
 import restAPI
 import socket
+
+from presence import Presence
 
 configPath = "appConfig.json"  # global define config file path
 appConfig = {}  # global set app config
@@ -74,6 +77,7 @@ class LightHouse:
             if appConfig['houseID'] != "":
                 print("LightHouse is set up.")
                 print("Initialising...")
+                presence.Presence()
             else:
                 print("LightHouse is not set up. need to run set up")
                 prmpt = ""
