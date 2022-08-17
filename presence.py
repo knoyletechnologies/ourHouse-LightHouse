@@ -6,6 +6,7 @@ import ping
 import restAPI
 import time
 import datetime
+import threading
 
 localHostList = "hosts.json"
 pingInternal = 60
@@ -44,14 +45,27 @@ class Presence:
             for host in hosts:
                 if host['localIP'] != "":
                     detected = self.pingHost(host['localIP'])
-                    if detected:
+                    print("detected: "+json.dumps(detected))
+                    if detected == True:
                         host['detected'] = True
                         host['lastDetected'] = datetime.datetime.now().isoformat()
                     else:
                         host['detected'] = False
                 else:
                     host['detected'] = False
-
+                hostIndex = hosts.index(host)
+                hosts[hostIndex] = host
+            apiData = {"hosts":hosts}
+            dtHostsUpdate = restAPI.API.presenceUpdate(self,lightHouse.appConfig['houseID'],
+                                                   lightHouse.appConfig['lightHouseKey'],
+                                                   lightHouse.appConfig['lightHouseNode'],apiData)
+            hostsUpdate = json.loads(dtHostsUpdate)
+            if hostsUpdate['status'] == "success":
+                print("Successfully updated api")
+                print(hostsUpdate)
+                hosts[:] = hostsUpdate['data']
+            else:
+                print("Failed to update API.")
         else:
             print("Hosts Empty -- check with api")
             dtGetHosts = restAPI.API.presenceHosts(self, lightHouse.appConfig['houseID'],
@@ -66,8 +80,10 @@ class Presence:
 
         self.save_hosts()
 
-    def loopCycle(self):
-        self.runCycle()
+    def loopCycle(self, stop=False):
+        while not stop:
+            self.runCycle()
+            time.sleep(60)
 
     def __init__(self):
         self.load_hosts()
